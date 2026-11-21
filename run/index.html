@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Run Tracker: 12-Week Build</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1c1c1a;--mut:#6b6a64;--line:#e3e1d8;--acc:#e8590c;--ok:#2f9e44;--lv0:#1c7ed6;--lv1:#0c8599;--lv2:#e8590c;--lv3:#c2255c;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161614;--card:#222220;--ink:#f0eee6;--mut:#a09f96;--line:#38372f;--acc:#ff8a4c;--ok:#51cf66;--lv0:#4dabf7;--lv1:#3bc9db;--lv2:#ff8a4c;--lv3:#f06595;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#161614;--card:#222220;--ink:#f0eee6;--mut:#a09f96;--line:#38372f;--acc:#ff8a4c;--ok:#51cf66;--lv0:#4dabf7;--lv1:#3bc9db;--lv2:#ff8a4c;--lv3:#f06595;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+h1{font-size:22px;margin:0 0 2px}
+.sub{color:var(--mut);font-size:14px;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.stat b{display:block;font-size:22px}
+.stat span,.mut{color:var(--mut);font-size:13px}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:99px}
+.tabs{display:flex;gap:6px;margin:14px 0}
+.tabs button{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font:inherit;font-weight:600;cursor:pointer}
+.tabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;color:#fff}
+.nav{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.nav button,.acts button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
+.nav .mid{flex:1;text-align:center}
+.day{font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
+.ttl{font-size:17px;margin:2px 0}
+.slot.done{border-color:var(--ok)}
+.okt{color:var(--ok);font-weight:700;font-size:13px}
+.res{margin-top:8px;font-size:16px}
+.hint{color:var(--acc);font-size:13px;margin-top:4px}
+.acts{display:flex;gap:8px;margin-top:10px}
+button.pri{margin-top:10px;width:100%;padding:11px;border:0;border-radius:10px;background:var(--acc);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.frm{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.frm label{font-size:12px;color:var(--mut)}
+.frm input,.set input{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.frm .full{grid-column:1/-1}
+.err{color:#e03131;font-size:13px;grid-column:1/-1}
+.set{display:flex;align-items:center;gap:10px}
+.set input{width:90px}
+.rl{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.rl:first-of-type{border-top:0}
+.rl button{border:0;background:none;color:var(--mut);font-size:18px;cursor:pointer}
+svg{width:100%;height:auto;display:block}
+.foot{color:var(--mut);font-size:12px;text-align:center;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Run Tracker</h1>
+  <p class="sub">12-week build from 23 Nov 2026 · 3 runs a week, a 4th is optional · by km and pace</p>
+  <div class="tabs"><button data-tab="plan">Plan</button><button data-tab="log">Runs</button><button data-tab="stats">Stats</button></div>
+  <div id="view"></div>
+  <div class="foot" id="foot">Rule of thumb: easy runs should feel conversational. Sharp pain or dizziness means stop and rest, and see a doctor if it persists.</div>
+</div>
+<script>
+const START=new Date(2026,10,23),NW=12;
+const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const KM=[[2,2,3,2],[2.5,2.5,3.5,2],[3,3,4,2.5],[2.5,2.5,3.5,2],[3.5,3.5,5,3],[4,3.5,5.5,3],[4,4,6,3],[3.5,3.5,5,3],[4.5,4,6.5,3.5],[5,4,7,3.5],[5,4.5,8,4],[4,3,5,0]];
+const LV=[['Level 1 · Foundation','--lv0','Build the habit. Run/walk is fine.'],['Level 2 · Base builder','--lv1','Longer easy runs, steady comfort.'],['Level 3 · Steady runner','--lv2','Add steady pace work.'],['Level 4 · Strong 5–8K','--lv3','Tempo blocks and a 5K test.']];
+const DAY=['Mon','Wed','Sat','Sun'],OFF=[0,2,5,6];
+const addD=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const fmt=d=>MN[d.getMonth()]+' '+d.getDate();
+const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const pd=s=>{const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])};
+const t0=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())};
+const wkStart=w=>addD(START,7*(w-1));
+const nowWeek=()=>Math.min(NW,Math.max(1,Math.floor((t0()-START)/864e5/7)+1));
+const weekOf=d=>Math.floor((pd(d)-START)/864e5/7)+1;
+const fp=s=>{s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const ft=s=>{s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
+function parseT(t){t=String(t).trim();if(!t)return 0;const p=t.split(':').map(Number);if(p.some(isNaN))return 0;return p.length==1?p[0]*60:p.length==2?p[0]*60+p[1]:p[0]*3600+p[1]*60+p[2]}
+
+function slotInfo(w,s){
+  const km=KM[w-1][s];if(!km)return null;
+  let type='easy',title='Easy run',desc='Easy, conversational pace. Walk breaks are fine'+(w==1?' (e.g. run 4 min, walk 1 min).':'.');
+  if(s==1){
+    if(w>=9&&w<=11){type='tempo';title='Tempo run';desc='Warm up 1 km easy, then '+(w==9?'1.5':'2')+' km at tempo pace (comfortably hard), easy to finish.'}
+    else if(w>=5&&w<=8){type='steady';title='Steady run';desc='Start easy, run the middle half at steady pace, finish easy.'}
+  }
+  if(s==2){type='long';title='Long run';desc='Long and relaxed. Slow down rather than stop.'}
+  if(w==12&&s==2){type='test';title='5K time trial';desc='Warm up 10 min easy, then 5 km at the best even pace you can hold.'}
+  if(s==3){type='easy';title='Optional easy run';desc='Short and easy. Skip it if your legs feel heavy.'}
+  return {km,type,title,desc,day:DAY[s],off:OFF[s]};
+}
+function range(type){
+  const E=S.set.easy;
+  return {easy:[E,E+30],long:[E+15,E+45],steady:[E-25,E],tempo:[E-65,E-35]}[type]||null;
+}
+function paceTxt(type){const r=range(type);return r?'Target pace '+fp(r[0])+'–'+fp(r[1])+' /km':'Even pace, as fast as you can hold'}
+
+let S={runs:[],set:{easy:450}},ref=null,loaded=false,tab='plan',cur=nowWeek(),form=null,err='',timer=null;
+const wkRuns=w=>S.runs.filter(r=>weekOf(r.d)==w);
+const sum=a=>a.reduce((x,y)=>x+y,0);
+
+function setHead(w){
+  const lv=LV[Math.min(3,Math.floor((w-1)/3))];
+  return '<span class="tag" style="background:var('+lv[1]+')">'+lv[0]+'</span> <span class="mut">'+lv[2]+(w%4==0?' Recovery week: keep it easy.':'')+'</span>';
+}
+function formHtml(k,km,r){
+  return '<div class="frm" data-form="'+k+'"><div><label>Distance (km)</label><input type="number" step="0.01" min="0" inputmode="decimal" data-f="km" value="'+(r?r.km:km||'')+'"></div>'
+   +'<div><label>Time (mm:ss or h:mm:ss)</label><input data-f="time" inputmode="numeric" placeholder="e.g. 22:30" value="'+(r?ft(r.sec):'')+'"></div>'
+   +'<div class="full"><label>Date</label><input type="date" data-f="d" value="'+(r?r.d:ymd(t0()))+'"></div>'
+   +(err?'<div class="err">'+err+'</div>':'')
+   +'<button class="pri" style="margin:0" data-a="save" data-k="'+k+'">Save run</button><button class="pri" style="margin:0;background:var(--mut)" data-a="cancel">Cancel</button></div>';
+}
+function slotHtml(w,s){
+  const I=slotInfo(w,s);if(!I)return '';
+  const k='w'+w+'s'+s,r=S.runs.find(x=>x.slot==k),d=addD(wkStart(w),I.off);
+  let h='<div class="card slot'+(r?' done':'')+'"><div class="row"><span class="day">'+I.day+' · '+fmt(d)+(s==3?' · optional':'')+'</span>'+(r?'<span class="okt">✓ done</span>':'')+'</div>'
+   +'<div class="ttl">'+I.title+' · <b>'+I.km+' km</b></div><div class="mut">'+I.desc+'</div><div class="mut">'+paceTxt(I.type)+'</div>';
+  if(form==k)h+=formHtml(k,I.km,r);
+  else if(r){
+    const p=r.sec/r.km,rg=range(I.type);
+    h+='<div class="res"><b>'+r.km+' km</b> · '+ft(r.sec)+' · <b>'+fp(p)+'</b> /km</div>';
+    if(rg&&(I.type=='easy'||I.type=='long')&&p<rg[0]-20)h+='<div class="hint">Faster than easy pace. Slow down so you can build volume safely.</div>';
+    h+='<div class="acts"><button data-a="open" data-k="'+k+'">Edit</button><button data-a="del" data-id="'+r.id+'">Remove</button></div>';
+  }else h+='<button class="pri" data-a="open" data-k="'+k+'">Log this run</button>';
+  return h+'</div>';
+}
+function planView(){
+  const w=cur,st=wkStart(w),rs=wkRuns(w),km=sum(rs.map(r=>r.km)),plan=sum(KM[w-1].slice(0,3));
+  const need=w==12?3:3;
+  let h='<div class="card"><div class="row"><b>My easy pace</b><div class="set"><input data-easy inputmode="numeric" value="'+fp(S.set.easy)+'"><span class="mut">min/km</span></div></div><div class="mut" style="margin-top:6px">All target paces are set from this. Update it as you get fitter.</div></div>';
+  h+='<div class="nav"><button data-n="-1" '+(w==1?'disabled':'')+'>←</button><div class="mid"><b>Week '+w+' of '+NW+'</b><div class="mut">'+fmt(st)+' – '+fmt(addD(st,6))+'</div></div><button data-n="1" '+(w==NW?'disabled':'')+'>→</button></div>';
+  h+='<div class="card">'+setHead(w)+'<div class="row" style="margin-top:10px"><span><b>'+rs.length+'</b> runs · <b>'+(Math.round(km*10)/10)+'</b> of '+plan+' km</span><span class="mut">goal: '+need+'+ runs</span></div><div class="bar"><i style="width:'+Math.min(100,km/plan*100)+'%"></i></div></div>';
+  for(let s=0;s<4;s++)h+=slotHtml(w,s);
+  return h;
+}
+function logView(){
+  let h='<div class="card"><b>Log an extra run</b>'+(form=='x'?formHtml('x',''):'<button class="pri" data-a="open" data-k="x">+ Add run</button>')+'</div><div class="card"><b>All runs</b>';
+  const a=[...S.runs].sort((x,y)=>y.d<x.d?-1:y.d>x.d?1:y.id-x.id);
+  if(!a.length)h+='<div class="mut" style="margin-top:8px">No runs yet. Log your first one from the Plan tab.</div>';
+  a.forEach(r=>{h+='<div class="rl"><div><b>'+r.km+' km</b> · '+ft(r.sec)+' · '+fp(r.sec/r.km)+' /km<div class="mut">'+fmt(pd(r.d))+(r.slot?' · plan run':' · extra')+'</div></div><button data-a="del" data-id="'+r.id+'" aria-label="Delete">✕</button></div>'});
+  return h+'</div>';
+}
+function bars(){
+  const W=320,H=140,act=[],pl=[];
+  for(let w=1;w<=NW;w++){act.push(sum(wkRuns(w).map(r=>r.km)));pl.push(sum(KM[w-1].slice(0,3)))}
+  const mx=Math.max(...act,...pl)+1;let s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Weekly km">';
+  for(let i=0;i<NW;i++){
+    const x=8+i*25,ha=act[i]/mx*100,hp=pl[i]/mx*100;
+    s+='<rect x="'+x+'" y="'+(110-ha)+'" width="19" height="'+ha+'" rx="3" style="fill:var(--ok)"/>'
+     +'<rect x="'+(x-2)+'" y="'+(110-hp)+'" width="23" height="2" style="fill:var(--acc)"/>'
+     +'<text x="'+(x+9.5)+'" y="128" text-anchor="middle" font-size="9" style="fill:var(--mut)">'+(i+1)+'</text>';
+  }
+  return s+'</svg><div class="mut">Green: km run. Orange line: planned km (3 main runs). X axis: week.</div>';
+}
+function paceLine(){
+  const a=S.runs.filter(r=>r.km>=1).sort((x,y)=>x.d<y.d?-1:x.d>y.d?1:x.id-y.id).map(r=>r.sec/r.km);
+  if(a.length<2)return '<div class="mut">Log 2 or more runs to see your pace trend.</div>';
+  const mn=Math.min(...a)-10,mx=Math.max(...a)+10,W=320,H=120;
+  const pts=a.map((p,i)=>[10+i*(300/(a.length-1)),10+(p-mn)/(mx-mn)*90]);
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Pace trend"><polyline fill="none" stroke-width="2.5" style="stroke:var(--acc)" points="'+pts.map(p=>p.join(',')).join(' ')+'"/>'
+   +pts.map(p=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.5" style="fill:var(--acc)"/>').join('')
+   +'<text x="10" y="116" font-size="10" style="fill:var(--mut)">first '+fp(a[0])+'</text><text x="310" y="116" text-anchor="end" font-size="10" style="fill:var(--mut)">latest '+fp(a[a.length-1])+' /km</text></svg><div class="mut">Lower is faster. Every run 1 km or longer, oldest to newest.</div>';
+}
+function statsView(){
+  const R=S.runs,km=sum(R.map(r=>r.km)),sec=sum(R.map(r=>r.sec));
+  const best=R.filter(r=>r.km>=1).reduce((b,r)=>(!b||r.sec/r.km<b)?r.sec/r.km:b,0);
+  const long=R.reduce((m,r)=>Math.max(m,r.km),0);
+  let w=nowWeek(),n=0;if(wkRuns(w).length<3)w--;while(w>=1&&wkRuns(w).length>=3){n++;w--}
+  return '<div class="grid"><div class="stat"><b>'+(Math.round(km*10)/10)+' km</b><span>total distance</span></div><div class="stat"><b>'+R.length+'</b><span>runs logged</span></div>'
+   +'<div class="stat"><b>'+(km?fp(sec/km):'–')+'</b><span>average pace /km</span></div><div class="stat"><b>'+(best?fp(best):'–')+'</b><span>best average pace /km</span></div>'
+   +'<div class="stat"><b>'+long+' km</b><span>longest run</span></div><div class="stat"><b>'+n+'</b><span>week streak (3+ runs)</span></div></div>'
+   +'<div class="card"><b>Weekly km</b>'+bars()+'</div><div class="card"><b>Pace trend</b>'+paceLine()+'</div>';
+}
+function render(){
+  document.querySelectorAll('[data-tab]').forEach(b=>b.className=b.dataset.tab==tab?'on':'');
+  document.getElementById('view').innerHTML=tab=='plan'?planView():tab=='log'?logView():statsView();
+}
+function foot(t){document.getElementById('foot').textContent=t}
+function save(){
+  try{localStorage.setItem('run-tracker-27',JSON.stringify(S))}catch(e){}
+  clearTimeout(timer);
+  timer=setTimeout(async()=>{if(ref&&loaded){try{await ref.set({runs:S.runs,set:S.set});foot('Saved')}catch(e){foot('Could not sync, saved on this device only')}}},500);
+}
+function clean(d){
+  const runs=(d.runs||[]).filter(r=>r&&/^\d{4}-\d\d-\d\d$/.test(r.d)&&isFinite(r.km)&&isFinite(r.sec)&&r.km>0&&r.sec>0).map(r=>({id:+r.id||Date.now(),d:r.d,km:+r.km,sec:+r.sec,slot:typeof r.slot=='string'?r.slot:null}));
+  const e=d.set&&+d.set.easy;return {runs,set:{easy:e>150&&e<1200?e:450}};
+}
+document.addEventListener('click',e=>{
+  const tb=e.target.closest('[data-tab]');if(tb){tab=tb.dataset.tab;form=null;err='';render();return}
+  const n=e.target.closest('[data-n]');if(n&&!n.disabled){cur=Math.min(NW,Math.max(1,cur+ +n.dataset.n));form=null;render();return}
+  const b=e.target.closest('[data-a]');if(!b)return;
+  const a=b.dataset.a;
+  if(a=='open'){form=b.dataset.k;err='';render()}
+  else if(a=='cancel'){form=null;err='';render()}
+  else if(a=='del'){S.runs=S.runs.filter(r=>r.id!=b.dataset.id);save();render()}
+  else if(a=='save'){
+    const f=document.querySelector('[data-form="'+b.dataset.k+'"]'),g=x=>f.querySelector('[data-f="'+x+'"]').value;
+    const km=Math.round(+g('km')*100)/100,sec=parseT(g('time')),d=g('d');
+    if(!(km>0&&km<100)||!(sec>0)||!d){err='Enter a distance and a time, e.g. 3 km and 22:30.';render();return}
+    const k=b.dataset.k;
+    if(k!='x')S.runs=S.runs.filter(r=>r.slot!=k);
+    S.runs.push({id:Date.now(),d,km,sec,slot:k=='x'?null:k});
+    form=null;err='';save();render();
+  }
+});
+document.addEventListener('change',e=>{
+  if(e.target.dataset&&e.target.hasAttribute('data-easy')){const s=parseT(e.target.value);if(s>150&&s<1200){S.set.easy=s;save()}render()}
+});
+
+(async function init(){
+  try{const l=JSON.parse(localStorage.getItem('run-tracker-27')||'null');if(l)S=clean(l)}catch(e){}
+  render();
+  try{
+    if(!window.claude||!window.claude.use)return;
+    const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);
+    if(!db||!user)return;
+    const id=await user.id();if(!id)return;
+    const r=db.collection('data/users/'+id).doc('runs');
+    const snap=await Promise.race([r.get(),new Promise(res=>setTimeout(()=>res(null),10000))]);
+    if(!snap)return foot('Cloud sync unavailable, saving on this device');
+    if(snap.exists)S=clean(snap.data()||{});
+    ref=r;loaded=true;
+    if(!snap.exists)r.set({runs:S.runs,set:S.set}).catch(()=>{});
+    render();foot('Progress syncs to your account');
+  }catch(e){foot('Saving on this device')}
+})();
+</script>
+</body>
+</html>
